@@ -1,0 +1,4 @@
+# Dépendances du Mini-Projet A
+# Aucune dépendance externe nécessaire — tout est dans la bibliothèque standard.
+# Pour lancer les tests :
+pytest>=7.0
