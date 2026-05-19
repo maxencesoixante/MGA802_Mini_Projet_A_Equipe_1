@@ -1,29 +1,41 @@
 """
 MGA802 — Mini-Projet A : Chiffrement de César
-Squelette de départ pour votre équipe.
+Étudiant : Maxence Dubois
 """
 import argparse
 
 
-def chiffrer(message: str, cle: int):
-	# TODO: retourner la chaîne chiffrée (type str).
-	# Exigences visibles dans tests/test_caesar.py :
-	# - test_cesar_officiel_cle_42
-	# - test_cesar_officiel_cle_neg_42
-	# - test_cesar_cle_zero_identite
-	# Exemples attendus par les tests :
-	# - chiffrer("Veni, vidi, vici!", 42) -> "Ludy, lyty, lysy!"
-	# - chiffrer("Veni, vidi, vici!", -42) -> "Foxs, fsns, fsms!"
-	# - chiffrer("Tout pareil.", 0) -> "Tout pareil."
-	pass
-
+def chiffrer(message: str, cle: int) -> str:
+	"""
+    Chiffre un message avec le chiffrement de César selon une clé donnée.
+    Conserve la casse (majuscules/minuscules) et ignore les caractères spéciaux.
+    """
+	resultat = []
+	for caractere in message:
+		# Vérifie si le caractère est une lettre minuscule (a-z)
+		if caractere.islower():
+			# ord('a') vaut 97. On ramène la lettre à un index de 0 à 25.
+			# On ajoute la clé, on applique le modulo 26 pour le dépassement.
+			nouvel_index = (ord(caractere) - ord('a') + cle) % 26
+			# On reconvertit l'index en lettre ASCII
+			resultat.append(chr(nouvel_index + ord('a')))
+		# Vérifie si le caractère est une lettre majuscule (A-Z)
+		elif caractere.isupper():
+			# ord('A') vaut 65. Même logique que pour les minuscules.
+			nouvel_index = (ord(caractere) - ord('A') + cle) % 26
+			resultat.append(chr(nouvel_index + ord('A')))
+		# Si c'est un espace, de la ponctuation, un chiffre ou un accent
+		else:
+			resultat.append(caractere)
+	# On rassemble la liste de caractères en une seule chaîne de texte
+	return "".join(resultat)
 
 def dechiffrer(message: str, cle: int):
-	# TODO: retourner la chaîne déchiffrée (type str).
-	# Exigence visible dans tests/test_caesar.py :
-	# - test_cesar_round_trip
-	# Le test vérifie que dechiffrer(chiffrer(msg, 7), 7) == msg.
-	pass
+	"""
+	    Déchiffre un message chiffré par César.
+	    Astuce : Déchiffrer revient à chiffrer en inversant le sens du décalage.
+	    """
+	return chiffrer(message, -cle)
 
 
 def enigma_chiffrer(message: str, cles):
