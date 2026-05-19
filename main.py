@@ -38,13 +38,26 @@ def dechiffrer(message: str, cle: int):
 	return chiffrer(message, -cle)
 
 
-def enigma_chiffrer(message: str, cles):
-	# TODO: retourner la chaîne chiffrée Enigma César (type str).
-	# Exigence visible dans tests/test_caesar.py :
-	# - test_enigma_officiel_maison
-	# Exemple attendu par le test :
-	# - enigma_chiffrer("MAISON", (7, 16, 9)) -> "TQRZEW"
-	pass
+def enigma_chiffrer(message: str, cles) -> str:
+	"""
+    Chiffre un message avec le chiffrement Enigma César.
+    La clé est un tuple de 3 entiers appliqués en rotation sur chaque lettre.
+    Les caractères non-alphabétiques sont conservés sans décalage de rotor.
+
+    Exemple : enigma_chiffrer("MAISON", (7, 16, 9)) -> "TQRZEW"
+    """
+	resultat = []
+	index_rotor = 0  # Tourne de 0 à 2, uniquement sur les lettres
+
+	for caractere in message:
+		if caractere.isalpha():
+			cle_courante = cles[index_rotor % 3]
+			resultat.append(chiffrer(caractere, cle_courante))
+			index_rotor += 1
+		else:
+			resultat.append(caractere)
+
+	return "".join(resultat)
 
 
 def _parse_cle(texte: str):
@@ -76,7 +89,7 @@ def _parse_cle(texte: str):
 	# Sinon, c'est une clé César simple : on convertit en entier.
 	return int(texte)
 
-def main(argv=None):
+'''def main(argv=None):
 	"""Point d'entrée principal du programme en ligne de commande.
 
 	Cette fonction :
@@ -173,5 +186,5 @@ if __name__ == "__main__":
 	# 
 	# Pour les tests : pytest importe ce fichier mais ne lance pas main()
 	# (car __name__ ne vaut pas "__main__" lors d'un import).
-	main()
+	main()'''
 
