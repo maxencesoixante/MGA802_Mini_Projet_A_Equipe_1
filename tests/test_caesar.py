@@ -43,6 +43,26 @@ def test_cesar_cle_zero_identite():
     """Une clé de 0 ne doit rien changer."""
     assert chiffrer("Tout pareil.", 0) == "Tout pareil."
 
+def test_cesar_majuscule() :
+    pass
+
+def test_cesar_minuscule() :
+    pass
+
+def test_cesar_caractere_speciaux() :
+    pass
+
+def test_cesar_grande_cle() :
+    pass
+
+def test_cesar_brute_force_cesar() :
+    pass
+
+def test_cesar_brute_force_enigma() :
+    pass
+
+def test_cesar_cle_enigma() :
+    pass
 
 # TODO : ajoutez vos propres tests ci-dessous
 #  - test pour les majuscules
