@@ -1,6 +1,6 @@
 """
 MGA802 — Mini-Projet A : Chiffrement de César
-Étudiant : Maxence Dubois
+Étudiant : Maxence Dubois, Jules Hua et Alexandre Hallonet
 """
 import argparse
 
@@ -89,102 +89,77 @@ def _parse_cle(texte: str):
 	# Sinon, c'est une clé César simple : on convertit en entier.
 	return int(texte)
 
-'''def main(argv=None):
-	"""Point d'entrée principal du programme en ligne de commande.
 
-	Cette fonction :
-	1. Parse les arguments saisis par l'utilisateur (action, message, clé)
-	2. Convertit la clé en type approprié (int ou tuple)
-	3. Appelle la fonction correspondante (chiffrer, dechiffrer ou enigma_chiffrer)
-	4. Affiche le résultat
-
-	Paramètre :
-		argv (list ou None) : si None, utilise sys.argv (arguments de la console).
-		                      si list, utilise les arguments fournis (utile pour les tests).
-
-	Exemples d'utilisation en terminal :
-		python main.py chiffrer "Veni, vidi, vici!" --cle 42
-		python main.py dechiffrer "Ludy, lyty, lysy!" --cle 42
-		python main.py enigma "MAISON" --cle 7-16-9
-	"""
+def main(argv=None):
+	"""Point d'entrée principal du programme en ligne de commande."""
 	# === ÉTAPE 1 : Créer et configurer le parseur d'arguments ===
-	# argparse est un module qui aide à gérer les arguments en ligne de commande.
-	# ArgumentParser crée un analyseur personnalisé pour notre programme.
 	parser = argparse.ArgumentParser(
 		description="Mini-Projet A : chiffrement de César / Enigma César.")
-
 	# === ÉTAPE 2 : Définir les arguments attendus ===
-
 	# Argument positionnel "action" : l'opération à effectuer.
-	# - Obligatoire (pas de -- devant)
-	# - Doit être l'une des valeurs listées dans "choices"
 	parser.add_argument(
 		"action",
 		choices=["chiffrer", "dechiffrer", "enigma"],
 		help="Opération à effectuer (chiffrer, dechiffrer ou enigma).")
-
-	# Argument positionnel "message" : le texte à traiter.
-	# - Obligatoire
-	# - C'est la chaîne que nous allons chiffrer ou déchiffrer
+	# Argument positionnel "message" : le texte OU le chemin du fichier à traiter.
 	parser.add_argument(
 		"message",
-		help="Texte à traiter (mettez-le entre guillemets).")
-
+		help="Texte à traiter ou chemin du fichier texte (si l'option --fichier est activée).")
 	# Argument optionnel "--cle" (abréviation "-c") : la clé de chiffrement.
-	# - Obligatoire via required=True
-	# - Peut être un entier (César) ou trois entiers séparés par des tirets (Enigma César)
+	# MODIFICATION : required=False maintenant pour permettre le mode brute-force sans clé.
 	parser.add_argument(
-		"-c", "--cle", required=True,
+		"-c", "--cle", required=False,
 		help="Clé : un entier (ex. '42') ou 'a-b-c' (ex. '7-16-9') pour Enigma.")
+	# NOUVEL ARGUMENT : Option pour indiquer qu'on traite un fichier
+	parser.add_argument(
+		"-f", "--fichier", action="store_true",
+		help="Indique que le paramètre 'message' est un chemin vers un fichier texte.")
+	# NOUVEL ARGUMENT : Option pour activer le mode brute-force
+	parser.add_argument(
+		"--brute-force", action="store_true",
+		help="Active le mode force brute pour deviner la clé (César ou Enigma).")
 
 	# === ÉTAPE 3 : Analyser les arguments ===
-	# parse_args() transforme les arguments en un objet "Namespace" avec des attributs.
-	# Si argv=None, il lit automatiquement depuis la ligne de commande.
-	# Sinon, il utilise la liste fournie.
 	args = parser.parse_args(argv)
 
-	# Maintenant, on peut accéder aux arguments via :
-	# - args.action (ex. "chiffrer")
-	# - args.message (ex. "Veni, vidi, vici!")
-	# - args.cle (ex. "42" ou "7-16-9", toujours en chaîne de caractères)
+	# Validation de sécurité : On a besoin soit d'une clé, soit du mode brute-force
+	# CORRECTION ICI : args.brute_force avec un "underscore"
+	if not args.cle and not args.brute_force:
+		parser.error("Vous devez fournir une clé avec --cle OU activer le mode --brute-force.")
 
-	# === ÉTAPE 4 : Convertir la clé (texte) en type approprié ===
-	# _parse_cle() transforme la clé en int (César) ou tuple (Enigma).
-	cle = _parse_cle(args.cle)
+	# === ÉTAPE 4 : Gestion de la source du texte (Console vs Fichier) ===
+	# Si l'utilisateur a mis l'option -f/--fichier, on charge le contenu du fichier
+	if args.fichier:
+		try:
+			with open(args.message, 'r', encoding='utf-8') as f:
+				texte_a_traiter = f.read()
+		except FileNotFoundError:
+			print(f"Erreur : Le fichier '{args.message}' est introuvable.")
+			return
+	else:
+		# Sinon, le message est directement le texte saisi
+		texte_a_traiter = args.message
 
-	# === ÉTAPE 5 : Choisir et exécuter l'opération ===
-	# Selon l'action, on appelle la fonction appropriée.
-	# (Une fois que chiffrer / dechiffrer / enigma_chiffrer seront implémentées,
-	#  ces appels retourneront le résultat du chiffrement/déchiffrement.)
+	# === ÉTAPE 5 : Convertir la clé (si elle est fournie) ===
+	cle = _parse_cle(args.cle) if args.cle else None
 
-	if args.action == "chiffrer":
-		# L'utilisateur veut chiffrer : on appelle chiffrer()
-		resultat = chiffrer(args.message, cle)
-	elif args.action == "dechiffrer":
-		# L'utilisateur veut déchiffrer : on appelle dechiffrer()
-		resultat = dechiffrer(args.message, cle)
-	else:  # args.action == "enigma"
-		# L'utilisateur veut utiliser Enigma César : on appelle enigma_chiffrer()
-		resultat = enigma_chiffrer(args.message, cle)
+	# === ÉTAPE 6 : Choisir et exécuter l'opération ===
+	# CORRECTION ICI : args.brute_force avec un "underscore"
+	if args.brute_force:
+		# TODO: Alexandre branchera ses fonctions ici au prochain module
+		# Exemple: resultat = brute_force_cesar(texte_a_traiter)
+		resultat = "[Mode Brute-Force non encore implémenté par Alexandre]"
+	else:
+		if args.action == "chiffrer":
+			resultat = chiffrer(texte_a_traiter, cle)
+		elif args.action == "dechiffrer":
+			resultat = dechiffrer(texte_a_traiter, cle)
+		else:  # args.action == "enigma"
+			resultat = enigma_chiffrer(texte_a_traiter, cle)
 
-	# === ÉTAPE 6 : Afficher le résultat ===
-	# print() affiche le résultat à l'écran pour que l'utilisateur le voie.
+	# === ÉTAPE 7 : Afficher le résultat ===
 	print(resultat)
-	
-	# TODO : Une fois les fonctions de base implémentées, vous pourrez :
-	# - Ajouter des options pour lire/écrire depuis des fichiers
-	# - Implémenter le mode brute-force
-	# - Ajouter d'autres fonctionnalités
 
 
 if __name__ == "__main__":
-	# Ce bloc s'exécute SEULEMENT si ce fichier est lancé directement depuis le terminal.
-	# Exemple : python main.py chiffrer "Veni" --cle 42
-	#
-	# Il ne s'exécute PAS si on fait "import main" depuis un autre fichier Python.
-	# Cela permet d'utiliser le code de main.py dans d'autres projets sans lancer main().
-	# 
-	# Pour les tests : pytest importe ce fichier mais ne lance pas main()
-	# (car __name__ ne vaut pas "__main__" lors d'un import).
-	main()'''
-
+	main()
