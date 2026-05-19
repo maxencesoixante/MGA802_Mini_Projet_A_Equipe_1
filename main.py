@@ -1,15 +1,23 @@
 """
 MGA802 — Mini-Projet A : Chiffrement de César
-Étudiant : Maxence Dubois, Jules Hua et Alexandre Hallonet
+Étudiants : Maxence Dubois, Jules Hua et Alexandre Hallonet
 """
 import argparse
+import unicodedata  # Ajout de la bibliothèque standard pour les accents
 
+def enlever_caracteres_speciaux(mot):
+    """Retire les accents d'une chaîne de caractères selon la méthode du cours."""
+    normalized_word = unicodedata.normalize('NFKD', mot)
+    return "".join([char for char in normalized_word if not unicodedata.combining(char)])
 
 def chiffrer(message: str, cle: int) -> str:
 	"""
     Chiffre un message avec le chiffrement de César selon une clé donnée.
     Conserve la casse (majuscules/minuscules) et ignore les caractères spéciaux.
     """
+	# 1. On commence par enlever les accents du message !
+	message = enlever_caracteres_speciaux(message)
+
 	resultat = []
 	for caractere in message:
 		# Vérifie si le caractère est une lettre minuscule (a-z)
