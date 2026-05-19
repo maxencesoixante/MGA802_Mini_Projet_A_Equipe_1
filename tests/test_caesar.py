@@ -8,6 +8,7 @@ Pour lancer les tests :
     pytest -v
 """
 import sys
+import unicodedata
 from pathlib import Path
 
 # Permet d'importer main.py depuis le dossier parent
@@ -43,14 +44,24 @@ def test_cesar_cle_zero_identite():
     """Une clé de 0 ne doit rien changer."""
     assert chiffrer("Tout pareil.", 0) == "Tout pareil."
 
-def test_cesar_majuscule() :
-    pass
+'''
+def test_cesar_majuscule(message,cle) :
+    """Une majuscule doit rester une majuscule"""
+    liste_maj_
+    for caractere in message:
+        # Vérifie si le caractère est une lettre minuscule (a-z)
+        if caractere.islower():
+            
+        
+    assert (chiffrer(message,cle)).isupper() == test_maj.isupper()
 
 def test_cesar_minuscule() :
     pass
+'''
 
 def test_cesar_caractere_speciaux() :
-    pass
+    # assert chiffrer("C'est déjà là Noël. Où_tôt.", 1) == "D'ftu efkb mb Opfm. Pv_upu."
+    assert chiffrer("C'est deja la Noel. Ou_tot.", 1) == "D'ftu efkb mb Opfm. Pv_upu."
 
 def test_cesar_grande_cle() :
     pass
