@@ -1,6 +1,8 @@
 """
 MGA802 — Mini-Projet A : Chiffrement de César
-Étudiant : Maxence Dubois
+# Auteurs     : Maxence Dubois, Jules Hua & Alexandre Hallonet
+# Date        : 19/05/2026
+# Description : Chiffrement de César (Chiffrement simple & Énigma)
 """
 import argparse
 
@@ -29,6 +31,8 @@ def chiffrer(message: str, cle: int) -> str:
 			resultat.append(caractere)
 	# On rassemble la liste de caractères en une seule chaîne de texte
 	return "".join(resultat)
+
+chiffrer('Veni, vidi, vici!',42)
 
 def dechiffrer(message: str, cle: int):
 	"""
@@ -75,7 +79,7 @@ def _parse_cle(texte: str):
 		return tuple(int(x) for x in texte.split("-"))
 	# Sinon, c'est une clé César simple : on convertit en entier.
 	return int(texte)
-
+'''
 def main(argv=None):
 	"""Point d'entrée principal du programme en ligne de commande.
 
@@ -174,4 +178,4 @@ if __name__ == "__main__":
 	# Pour les tests : pytest importe ce fichier mais ne lance pas main()
 	# (car __name__ ne vaut pas "__main__" lors d'un import).
 	main()
-
+'''
