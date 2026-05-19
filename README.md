@@ -1,10 +1,9 @@
-# MGA802 — Mini-Projet A : Chiffrement de César
+# MGA802 — Mini-Projet A : Chiffrement de César - Équipe 1
 
 Dépôt-modèle (template) pour le Mini-Projet A du cours **MGA802 — Introduction à
 la programmation avec Python** à l'ÉTS.
 
-> **Étudiants :** cliquez sur **« Use this template »** (en haut à droite) pour
-> créer le dépôt de votre équipe. **Ne forkez pas** ce dépôt directement.
+> **Étudiants :** Maxence Dubois, Jules Hua et Alexandre Hallonet.
 
 ---
 
