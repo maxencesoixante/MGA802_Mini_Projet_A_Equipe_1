@@ -1,155 +1,172 @@
-# MGA802 — Mini-Projet A : Chiffrement de César - Équipe 1
+# MGA802 — Mini-Projet A : Chiffrement de César
 
-Dépôt-modèle (template) pour le Mini-Projet A du cours **MGA802 — Introduction à
-la programmation avec Python** à l'ÉTS.
-
-> **Étudiants :** Maxence Dubois, Jules Hua et Alexandre Hallonet.
+> **Cours :** MGA802 — Introduction à la programmation avec Python (ÉTS, Été 2026)
+> **Équipe 1 :** Maxence Dubois, Jules Hua, Alexandre Hallonet
 
 ---
 
-## À faire
+## Description
 
-Implémenter un programme Python qui chiffre et déchiffre du texte selon
-**deux modes** :
+Ce programme Python implémente deux modes de chiffrement par substitution inspirés du chiffrement historique de César et de la machine Enigma :
 
-1. Le **chiffrement de César** classique (clé = un seul entier)
-2. Le **chiffrement Enigma César** (clé = trois entiers rotatifs)
+- **Chiffrement de César** : chaque lettre est décalée d'un nombre fixe de positions dans l'alphabet (clé = 1 entier).
+- **Chiffrement Enigma César** : variante où trois décalages sont appliqués en rotation, lettre par lettre (clé = 3 entiers séparés par des tirets, ex. `7-16-9`).
 
-### Fonctionnalités attendues
+Pour chacun des deux modes, le programme permet :
 
-Pour **chacun des deux modes** :
-
-1. Chiffrement / déchiffrement d'un message saisi dans la **console**
-2. Chiffrement / déchiffrement d'un **fichier texte** (chemin fourni par
-   l'utilisateur)
-3. Acceptation de **n'importe quelle clé entière** (positive ou négative).
-   Pour Enigma César : clé de **exactement 3 nombres** (ex : `42-21-7`).
-4. Mode **brute-force** : retrouver la clé d'un message chiffré par chiffrement de César ou chiffrement Enigma César
-5. **Messages clairs** à l'utilisateur (introduction, requêtes, info, erreurs)
-
-> Le brute-force d'Enigma César balaie **26³ = 17 576 combinaisons**,
-> soyez efficaces pour votre stratégie et mesurez le temps que cela prend (sur la même machine) pour différentes solutions dans votre rapport.
-
-### Caractères utilisés pour tester
-
-**César :**
-
-| Clé | Entrée                  | Sortie attendue        |
-|----:|-------------------------|------------------------|
-| 42  | `Veni, vidi, vici!`     | `Ludy, lyty, lysy!`    |
-| -42 | `Veni, vidi, vici!`     | `Foxs, fsns, fsms!`    |
-
-**Enigma César :**
-
-| Clé        | Entrée     | Sortie attendue |
-|------------|------------|-----------------|
-| `(7,16,9)` | `MAISON`   | `TQRZEW`        |
+1. De chiffrer et déchiffrer un message saisi directement dans la console ou en ligne de commande.
+2. De chiffrer et déchiffrer le contenu d'un fichier texte (chemin fourni par l'utilisateur).
+3. De retrouver la clé d'un message chiffré par **force brute** (César : 26 clés ; Enigma César : 26³ = 17 576 combinaisons).
 
 ---
 
-## Comment commencer
+## Installation
 
-1. Cliquez **« Use this template »** (boutton vert en haut à droite de la fenêtre Github) → choisissez un nom pour le dépôt de
-   votre équipe (par ex. `equipe-N-caesar-20262`)
-2. **Ajoutez vos coéquipiers** comme collaborateurs (Settings → Collaborators). N'oubliez pas que vos collègues peuvent aussi forker le dépôt et proposer des mises à jour par PR.
-3. Clonez le dépôt localement : `git clone <url>`
-4. Discutez ensemble :
-   - Comment découper le code en **fonctions et modules** ?
-   - Qui fait quoi ?
-   - Quelle stratégie pour le brute-force ?
-5. Travaillez toujours avec des **branches** (`git checkout -b ma-fonctionnalite`) et faites
-   des **pull requests** pour réviser le code de vos coéquipiers.
-
----
-
-## Utilisation en ligne de commande
-
-En plus du mode console interactif, le programme s'utilise directement depuis le
-terminal grâce au module standard [`argparse`](https://docs.python.org/3/library/argparse.html).
-Le point d'entrée (`main()` + `if __name__ == "__main__":`) est déjà fourni
-dans `main.py` ; il appelle vos fonctions une fois implémentées.
+**Prérequis :** Python 3.8 ou supérieur.
 
 ```bash
-python main.py chiffrer   "Veni, vidi, vici!" --cle 42
-python main.py dechiffrer "Ludy, lyty, lysy!" --cle 42
-python main.py enigma     "MAISON"            --cle 7-16-9
+# 1. Cloner le dépôt
+git clone <url-du-depot>
+cd <nom-du-depot>
+
+# 2. Installer les dépendances (pytest pour les tests)
+pip install -r requirements.txt
 ```
 
-- `action` : `chiffrer`, `dechiffrer` ou `enigma`
-- `message` : le texte à traiter (entre guillemets)
-- `-c` / `--cle` : un entier pour César (ex. `42`, `-42`), ou trois entiers
-  séparés par des tirets pour Enigma César (ex. `7-16-9`)
+Aucune dépendance externe n'est requise pour l'exécution du programme lui-même : toutes les bibliothèques utilisées (`argparse`, `unicodedata`, `string`, `time`, `timeit`) font partie de la bibliothèque standard Python.
 
-Affichez l'aide générée automatiquement avec :
+---
+
+## Utilisation
+
+### Mode interactif (console)
 
 ```bash
+python main.py
+```
+
+Le programme vous guide pas à pas : choix du mode, de l'opération et de la clé.
+
+### Ligne de commande
+
+```bash
+# Chiffrement de César
+python main.py chiffrer   "Veni, vidi, vici!" --cle 42
+python main.py dechiffrer "Ludy, lyty, lysy!" --cle 42
+
+# Enigma César
+python main.py enigma "MAISON" --cle 7-16-9
+
+# Traitement d'un fichier texte
+python main.py chiffrer message.txt --cle 13 --fichier
+python main.py dechiffrer message_chiffre.txt --cle 13 --fichier
+
+# Force brute (sans clé)
+python main.py dechiffrer "Ludy, lyty, lysy!" --brute-force
+python main.py enigma     "TQRZEW"            --brute-force
+
+# Afficher l'aide
 python main.py -h
 ```
 
-> Libre à vous d'ajouter d'autres arguments (ex. `--fichier`, `--brute-force`).
+**Arguments :**
 
-### Mesurer le temps d'exécution (brute-force)
+| Argument | Description |
+|---|---|
+| `action` | `chiffrer`, `dechiffrer` ou `enigma` |
+| `message` | Texte à traiter (entre guillemets) ou chemin de fichier si `--fichier` est activé |
+| `-c` / `--cle` | Clé entière pour César (`42`, `-42`) ou trois entiers séparés par un tiret pour Enigma César (`7-16-9`) |
+| `-f` / `--fichier` | Indique que `message` est un chemin vers un fichier texte |
+| `--brute-force` | Active la recherche exhaustive de la clé (remplace `--cle`) |
 
-Pour le rapport, mesurez le temps de votre brute-force avec la bibliothèque
-standard :
+---
 
-```python
-from time import perf_counter
-tic = perf_counter()
-# ... votre brute-force ...
-print(f"Temps d'execution: {perf_counter() - tic} [s]")
+## Exemples de chiffrement
+
+**César :**
+
+| Clé | Entrée | Sortie attendue |
+|---:|---|---|
+| 42 | `Veni, vidi, vici!` | `Ludy, lyty, lysy!` |
+| -42 | `Veni, vidi, vici!` | `Foxs, fsns, fsms!` |
+
+**Enigma César :**
+
+| Clé | Entrée | Sortie attendue |
+|---|---|---|
+| `(7, 16, 9)` | `MAISON` | `TQRZEW` |
+
+---
+
+## Structure du projet
+
+```
+.
+├── tests/
+│   └── test_caesar.py       # Tests unitaires (pytest)
+├── .gitignore               # Fichiers et dossiers ignorés par Git
+├── LICENSE                  # Licence du projet
+├── README.md                # Ce fichier
+├── TESTS_GUIDE.md           # Guide d'utilisation des tests
+├── main.py                  # Point d'entrée : fonctions de chiffrement + CLI (argparse)
+├── message.txt              # Fichier texte d'exemple pour les tests de fichier
+└── requirements.txt         # Dépendances (pytest)
 ```
 
-ou, pour une mesure répétée plus fiable, avec
-[`timeit`](https://docs.python.org/3/library/timeit.html) :
+Le code est organisé autour d'un seul module `main.py` qui regroupe :
 
-```python
-from timeit import timeit
-timeit('brute_force_cesar(message_chiffre)', globals=globals(), number=100)
+- `enlever_caracteres_speciaux(mot)` — normalisation des accents via `unicodedata`
+- `chiffrer(message, cle)` — chiffrement de César
+- `dechiffrer(message, cle)` — déchiffrement de César (appel symétrique à `chiffrer`)
+- `enigma_chiffrer(message, cles)` — chiffrement Enigma César (3 rotors)
+- `_parse_cle(texte)` — conversion de la clé en `int` ou `tuple`
+- `main(argv)` — interface ligne de commande via `argparse`
+
+---
+
+## Choix de conception
+
+**Gestion des majuscules et minuscules :** La casse est conservée. Les lettres minuscules restent minuscules et les majuscules restent majuscules après chiffrement.
+
+**Gestion des accents :** Les accents sont retirés avant le chiffrement grâce à `unicodedata.normalize('NFKD', ...)` et au filtrage des caractères combinants. Par exemple, `é` devient `e` avant d'être chiffré. Ce choix est documenté dans le README et reflété dans les tests.
+
+**Caractères non-alphabétiques :** Les espaces, chiffres et signes de ponctuation sont conservés tels quels — ils ne sont pas décalés et ne font pas avancer le compteur de rotor en mode Enigma César.
+
+**Clés arbitraires :** Toute clé entière est acceptée (positive, négative ou nulle). Le modulo 26 garantit un comportement correct pour les clés très grandes ou hors de \[-25, 25\].
+
+**Déchiffrement :** La fonction `dechiffrer` réutilise `chiffrer` avec la clé opposée (`-cle`), ce qui évite la duplication de code.
+
+**Enigma César — avancement du rotor :** Le compteur de rotor n'avance que sur les lettres alphabétiques. Les caractères spéciaux ne consomment pas de position de clé, conformément à la spec.
+
+---
+
+## Tests
+
+```bash
+# Lancer tous les tests
+pytest -v
+
+# Si pytest n'est pas dans le PATH
+python -m pytest -v
 ```
 
-> Indiquez la machine utilisée dans le rapport (les temps ne sont comparables
-> que sur la même machine).
+Les tests couvrent les cas officiels de la spec ainsi que des cas supplémentaires :
+- Majuscules et minuscules
+- Ponctuation, espaces, accents et caractères spéciaux
+- Clé 0 (identité) et très grandes clés positives et négatives
+- Symétrie chiffrement/déchiffrement (round-trip)
+- Force brute César et Enigma César
+- Rejet d'une clé Enigma qui n'a pas exactement 3 entiers
+- Chaîne vide et autres cas limites
 
 ---
 
-## Livrables (rappel)
+## Auteurs et distribution des tâches
 
-- Le code source (Python)
-- Ce `README.md` mis à jour avec :
-  - Description du programme
-  - Instructions d'installation et d'exécution
-  - Auteurs (membres de l'équipe)
-  - Choix de conception (par ex. comment vous gérez les majuscules / accents)
-- Un dossier `tests/` avec quelques tests unitaires
-- Un **rapport écrit de 3 pages max** (PDF, commité au dépôt, pas de page de garde, pas de conclusion, pas d'introduction) couvrant :
-  structure, algorithmes, évaluation de performance, distribution des tâches
+| Membre | Contributions principales |
+|---|---|
+| **Maxence Dubois** | Chiffrement/déchiffrement de César, gestion des accents, tests unitaires César |
+| **Jules Hua** | Chiffrement Enigma César, interface `argparse` (CLI), lecture/écriture de fichiers |
+| **Alexandre Hallonet** | Mode force brute (César et Enigma César), mesures de performance, rapport |
 
-> Voir `Mini_Projet_A_Specs.md` (Moodle) pour le détail complet.
-
----
-
-## Critères d'évaluation (résumé)
-
-| Catégorie           | Points |
-|---------------------|-------:|
-| Code fonctionnel    |   3/10 |
-| Tâche accomplie     |   2/10 |
-| Commentaires        |   1/10 |
-| Noms de variables   |   2/10 |
-| Style               |   2/10 |
-
-Voir `Mini_Projet_A_Grading_Rubric.md` (Moodle) pour les critères détaillés.
-
----
-
-## Conseils
-
-- Lisez la documentation Python sur le module
-  [`string`](https://docs.python.org/3/library/string.html)
-- Consultez le guide d'utilisation des tests : [`TESTS_GUIDE.md`](TESTS_GUIDE.md)
-- Pour la lecture / écriture de fichiers texte, utilisez `with open(..., encoding="utf-8") as f:`
-- **Testez votre code avant chaque commit**
-- **Messages de commit clairs** (`feat: ...`, `fix: ...`, `docs: ...`)
-
-Bonne programmation !
+Chaque membre a également revu et testé le code des autres via des branches Git et des pull requests.
