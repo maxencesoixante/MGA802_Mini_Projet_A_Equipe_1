@@ -60,11 +60,12 @@ def test_cesar_minuscule() :
 '''
 
 def test_cesar_caractere_speciaux() :
-    # assert chiffrer("C'est déjà là Noël. Où_tôt.", 1) == "D'ftu efkb mb Opfm. Pv_upu."
-    assert chiffrer("C'est deja la Noel. Ou_tot.", 1) == "D'ftu efkb mb Opfm. Pv_upu."
+    assert chiffrer("Noël est déjà là. Où_tôt.", 1) == "Opfm ftu efkb mb. Pv_upu."
+    # assert chiffrer("C'est deja la Noel. Ou_tot.", 1) == "D'ftu efkb mb Opfm. Pv_upu."
 
 def test_cesar_grande_cle() :
-    pass
+    """Les 3 clés donnent la même réponse."""
+    assert (chiffrer("Tout pareil.", -203) == chiffrer("Tout pareil.", 5) == chiffrer("Tout pareil.", 83))
 
 def test_cesar_brute_force_cesar() :
     pass
@@ -73,7 +74,16 @@ def test_cesar_brute_force_enigma() :
     pass
 
 def test_cesar_cle_enigma() :
-    pass
+    """test que enigma_chiffrer rejette une clé qui n'a pas 3 nombres """
+    assert (enigma_chiffrer("Erreur clé pas 3 nbr.",(1,2)) ==
+            f"\033[31m{("Erreur pour renseigner le nombre de variables ! \n"
+                           "Il faut 3 valeurs pour les clés. Merci. ")}\033[0m" and
+            enigma_chiffrer("Erreur clé 3 entrées pas numérique.", (1, 2, 'e')) ==
+            f"\033[31m{("Erreur pour renseigner le type de variables ! \n"
+                           "Il faut des entiers ou des floats pour les clés. Merci. ")}\033[0m" and
+            enigma_chiffrer("Erreur clé : pas 3 nbr et pas numérique.", (1, 'e')) ==
+            f"\033[31m{("Erreur pour renseigner le type et le nombre de variables ! \n"
+                           "Il faut des entiers ou des floats et 3 valeurs pour les clés. Merci. ")}\033[0m")
 
 # TODO : ajoutez vos propres tests ci-dessous
 #  - test pour les majuscules

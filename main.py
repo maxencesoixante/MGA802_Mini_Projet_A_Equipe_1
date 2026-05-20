@@ -47,25 +47,36 @@ def dechiffrer(message: str, cle: int):
 
 
 def enigma_chiffrer(message: str, cles) -> str:
-	"""
+    """
     Chiffre un message avec le chiffrement Enigma César.
     La clé est un tuple de 3 entiers appliqués en rotation sur chaque lettre.
     Les caractères non-alphabétiques sont conservés sans décalage de rotor.
 
     Exemple : enigma_chiffrer("MAISON", (7, 16, 9)) -> "TQRZEW"
     """
-	resultat = []
-	index_rotor = 0  # Tourne de 0 à 2, uniquement sur les lettres
+    resultat = []
+    index_rotor = 0  # Tourne de 0 à 2, uniquement sur les lettres
 
-	for caractere in message:
-		if caractere.isalpha():
-			cle_courante = cles[index_rotor % 3]
-			resultat.append(chiffrer(caractere, cle_courante))
-			index_rotor += 1
-		else:
-			resultat.append(caractere)
+    # On vérifie que le tuple de clés n'est composé que de nombre et qu'il contient 3 valeurs
+    if all(isinstance(cle, (int, float)) for cle in cles) and len(cles) == 3 :
+        for caractere in message:
+            if caractere.isalpha():
+                cle_courante = cles[index_rotor % 3]
+                resultat.append(chiffrer(caractere, cle_courante))
+                index_rotor += 1
+            else:
+                resultat.append(caractere)
+        return "".join(resultat)
 
-	return "".join(resultat)
+    elif not all(isinstance(cle, (int, float)) for cle in cles) and len(cles) != 3 :
+        return f"\033[31m{("Erreur pour renseigner le type et le nombre de variables ! \n"
+                           "Il faut des entiers ou des floats et 3 valeurs pour les clés. Merci. ")}\033[0m"
+    elif len(cles) == 3 :
+        return f"\033[31m{("Erreur pour renseigner le type de variables ! \n"
+                           "Il faut des entiers ou des floats pour les clés. Merci. ")}\033[0m"
+    else :
+        return f"\033[31m{("Erreur pour renseigner le nombre de variables ! \n"
+                           "Il faut 3 valeurs pour les clés. Merci. ")}\033[0m"
 
 
 def _parse_cle(texte: str):
@@ -168,6 +179,7 @@ def main(argv=None):
 	# === ÉTAPE 7 : Afficher le résultat ===
 	print(resultat)
 
+enigma_chiffrer("Erreur pas clé pas 3 nbr.",(1,2))
 
 if __name__ == "__main__":
 	main()
