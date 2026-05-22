@@ -57,19 +57,21 @@ def enigma_chiffrer(message: str, cles: tuple) -> str:
 
     Exemple : enigma_chiffrer("MAISON", (7, 16, 9)) -> "TQRZEW"
     """
-if len(cles) != 3 and all(isinstance(cle, int) for cle in cles):
-    raise ValueError(f"Erreur pour renseigner le nombre de variables ! \n"
-                     "Il faut exactement 3 entiers pour les clés. Merci. ")
-elif len(cles) != 3 :
-    raise ValueError(f"Erreur pour renseigner le type et le nombre de variables ! \n"
-                     "Il faut exactement 3 entiers pour les clés. Merci. ")
-elif not all(isinstance(cle, int) for cle in cles) :
-    raise ValueError(f"Erreur pour renseigner le type de variables ! \n"
-                     "Il faut 3 entiers pour les clés. Merci. ")
 
-resultat = []
+    if len(cles) != 3 and all(isinstance(cle, int) for cle in cles):
+        raise ValueError("Erreur pour renseigner le nombre de variables ! \n"
+                         "Il faut exactement 3 entiers pour les clés. Merci. ")
+    elif len(cles) != 3 :
+        raise ValueError("Erreur pour renseigner le type et le nombre de variables ! \n"
+                         "Il faut exactement 3 entiers pour les clés. Merci. ")
+    elif not all(isinstance(cle, int) for cle in cles) :
+        raise ValueError("Erreur pour renseigner le type de variables ! \n"
+                         "Il faut 3 entiers pour les clés. Merci. ")
+
+    resultat = []
     index_rotor = 0  # Tourne de 0 à 2, uniquement sur les lettres
 
+    # if all(isinstance(cle, int) for cle in cles) and len(cles) == 3:
     for caractere in message:
         if caractere.isalpha():
             cle_courante = cles[index_rotor % 3]
@@ -79,17 +81,16 @@ resultat = []
             resultat.append(caractere)
 
     return "".join(resultat)
-
 """
-    elif not all(isinstance(cle, (int, float)) for cle in cles) and len(cles) != 3 :
+    elif not all(isinstance(cle, int) for cle in cles) and len(cles) != 3 :
         return f"\033[31m{("Erreur pour renseigner le type et le nombre de variables ! \n"
-                           "Il faut des entiers ou des floats et 3 valeurs pour les clés. Merci. ")}\033[0m"
+                           "Il faut exactement 3 entiers pour les clés. Merci. ")}\033[0m"
     elif len(cles) == 3 :
         return f"\033[31m{("Erreur pour renseigner le type de variables ! \n"
-                           "Il faut des entiers ou des floats pour les clés. Merci. ")}\033[0m"
+                           "Il faut 3 entiers pour les clés. Merci. ")}\033[0m"
     else :
         return f"\033[31m{("Erreur pour renseigner le nombre de variables ! \n"
-                           "Il faut 3 valeurs pour les clés. Merci. ")}\033[0m"
+                           "Il faut exactement 3 entiers pour les clés. Merci. ")}\033[0m"
 """
 
 def enigma_dechiffrer(message: str, cles: tuple) -> str:
@@ -207,7 +208,6 @@ def main(argv=None):
     # === ÉTAPE 7 : Afficher le résultat ===
     print(resultat)
 
-enigma_chiffrer("Erreur pas clé pas 3 nbr.",(1,2))
 
 if __name__ == "__main__":
     main()

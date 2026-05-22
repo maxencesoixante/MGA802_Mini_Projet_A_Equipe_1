@@ -75,15 +75,20 @@ def test_cesar_brute_force_enigma() :
 
 def test_cesar_cle_enigma() :
     """test que enigma_chiffrer rejette une clé qui n'a pas 3 nombres """
-    assert (enigma_chiffrer("Erreur clé pas 3 nbr.",(1,2)) ==
-            f"\033[31m{("Erreur pour renseigner le nombre de variables ! \n"
-                           "Il faut 3 valeurs pour les clés. Merci. ")}\033[0m" and
-            enigma_chiffrer("Erreur clé 3 entrées pas numérique.", (1, 2, 'e')) ==
-            f"\033[31m{("Erreur pour renseigner le type de variables ! \n"
-                           "Il faut des entiers ou des floats pour les clés. Merci. ")}\033[0m" and
-            enigma_chiffrer("Erreur clé : pas 3 nbr et pas numérique.", (1, 'e')) ==
-            f"\033[31m{("Erreur pour renseigner le type et le nombre de variables ! \n"
-                           "Il faut des entiers ou des floats et 3 valeurs pour les clés. Merci. ")}\033[0m")
+    mauvaise_cles = ((1,2),(1, 2, 'e'),(1, 'e'))
+    message_erreur = ("Erreur pour renseigner le nombre de variables ! \n"
+                      "Il faut exactement 3 entiers pour les clés. Merci. ",
+                      "Erreur pour renseigner le type de variables ! \n"
+                      "Il faut 3 entiers pour les clés. Merci. ",
+                      "Erreur pour renseigner le type et le nombre de variables ! \n"
+                       "Il faut exactement 3 entiers pour les clés. Merci. ")
+
+    for validation_erreur in range(0,3) :
+        try :
+            enigma_chiffrer("Erreur clé pas 3 nbr.", mauvaise_cles[validation_erreur])
+        except ValueError as e:
+            # Vérification du message pour chaque valeur
+            assert str(e) == message_erreur[validation_erreur]
 
 # TODO : ajoutez vos propres tests ci-dessous
 #  - test pour les majuscules
