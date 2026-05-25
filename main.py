@@ -127,41 +127,63 @@ def noter_decryptage(message: str) -> int :
         note_decryptage += lettres_frequentes.get(c, 0)
         # Le 0 indique qu'il n'y a pas de pénalité pour les autres lettres
 
-        # =========================
-        # 2. Mots fréquents
-        # =========================
-        mots_frequents = ('le', 'la', 'de', 'un', 'une',
-                          'a', 'et', 'il', 'je', 'ne', 'pas', 'en')
+    # =========================
+    # 2. Mots fréquents
+    # =========================
+    mots_frequents = ('le', 'la', 'de', 'un', 'une',
+                      'a', 'et', 'il', 'je', 'ne', 'pas', 'en')
 
-        mots_texte = texte_test_enigmma.split()
-        for mot in mots_texte :
-            if mot in mots_frequents :
-                note_decryptage += 10
+    mots_texte = texte_test_enigmma.split()
+    for mot in mots_texte :
+        if mot in mots_frequents :
+            note_decryptage += 5
 
-        # =========================
-        # 3. Voyelles proportions
-        # =========================
-        voyelles = "aeiouy"
-        nbre_de_voyelle = sum(1 for lettre in texte_test_enigmma if lettre in voyelles)
+    # =========================
+    # 3. Voyelles proportions
+    # =========================
+    voyelles = "aeiouy"
+    nbre_de_voyelle = sum(1 for lettre in texte_test_enigmma if lettre in voyelles)
 
-        if len(texte_test_enigmma) > 0 :
-            proportion_voyelle = nbre_de_voyelle / len(texte_test_enigmma)
+    if len(texte_test_enigmma) > 0 :
+        proportion_voyelle = nbre_de_voyelle / len(texte_test_enigmma)
 
-            if proportion_voyelle < 0.25 or proportion_voyelle > 0.65 :
-                note_decryptage -= 5
+        if proportion_voyelle < 0.25 or proportion_voyelle > 0.65 :
+            note_decryptage *= 0.95 # On retire 5% du score
 
-            if len(texte_test_enigmma) > 4 : # Le plus long mot français avec seulement des voyelles est ouïe
-                if proportion_voyelle < 0.15 or proportion_voyelle > 0.85 :
-                    note_decryptage = 0
+        if len(texte_test_enigmma) > 4 : # Le plus long mot français avec seulement des voyelles est ouïe
+            if proportion_voyelle < 0.15 or proportion_voyelle > 0.85 :
+                note_decryptage *= 0.85 # On retire 15% du score
 
-        # =========================
-        # 4. Apostrophes interdites
-        # =========================
-        apostrophe_impossible = ("a'","b'","e'","f'","g'","h'","i'","k'","o'",
-                                 "p'","q'","r'","u'","v'","w'","x'","y'","z'")
-        for mot in apostrophe_impossible :
-            if mot in texte_test_enigmma :
-                note_decryptage = 0
+    # =========================
+    # 4. Apostrophes interdites
+    # =========================
+    apostrophe_impossible = ("a'","b'","e'","f'","g'","h'","i'","k'","o'",
+                             "p'","q'","r'","u'","v'","w'","x'","y'","z'")
+    for mot in apostrophe_impossible :
+        if mot in texte_test_enigmma :
+            note_decryptage *= 0.85 # On retire 15% du score
+
+    # =========================
+    # 5. Digrammes / Trigrammes rares (malus)
+    # =========================
+
+    # Issus d'erreur lors de tests et que peu probable de base
+    digrammes_rares = ("zx", "qj", "jq", "wq", "qw", "cw", "xq", "zq", "yu", "qk",
+                       "cg","gc","uu","mq","zj")
+    trigrammes_rares = ("qlu", "zxq", "wqz", "zqw", "bfr", "jqx", "qqq", "qmu", "qwu", "kjq",
+                        "quu","eui","byr","qau","eyk","euw","qiu","zue","vqr","mqr","qnc","upv",
+                        "qsu","kqr","nqs","qnu","fqr","rvx","qbu","tqr","jxe","")
+    # Digrammes
+    for i in range(len(texte_test_enigmma) - 1):
+        digramme = texte_test_enigmma[i:i + 2]
+        if digramme in digrammes_rares:
+            note_decryptage -= 3
+
+    # Trigrammes
+    for i in range(len(texte_test_enigmma) - 2):
+        trigramme = texte_test_enigmma[i:i + 3]
+        if trigramme in trigrammes_rares:
+            note_decryptage -= 6
 
     return note_decryptage
 
@@ -209,11 +231,11 @@ def brute_force_enigma(message: str) -> str:
                          """
                         # Section intermédiaire
                         extrait_texte_optimisation = message[:100]
-                        texte_partiel_enigmma = enigma_dechiffrer(message, cle_enigma)
+                        texte_partiel_enigmma = enigma_dechiffrer(extrait_texte_optimisation, cle_enigma)
                         score_intermediaire = noter_decryptage(texte_partiel_enigmma)
                         # Section finale
                         texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
-                        score_final = noter_decryptage(texte_partiel_enigmma)
+                        score_final = noter_decryptage(texte_complet_enigmma)
 
                         meilleurs_specs.append((score_intermediaire, score_final, cle_enigma, texte_complet_enigmma))
                     else :
@@ -272,6 +294,7 @@ def brute_force_enigma(message: str) -> str:
 
     fin_brute_force = perf_counter()
     print(f"Temps d'exécution : {fin_brute_force - debut_brute_force:.4f} secondes")
+    print("Décryptage brute force Enigma")
 
     return meilleurs_specs_triees
 
@@ -317,7 +340,7 @@ def brute_force_cesar(message: str) -> str:
 
     fin_brute_force = perf_counter()
     print(f"Temps d'exécution : {fin_brute_force - debut_brute_force:.4f} secondes")
-
+    print("Décryptage brute force César")
     return meilleurs_specs_triees
 
 def _parse_cle(texte: str):
@@ -410,7 +433,11 @@ def main(argv=None):
 
     # === ÉTAPE 6 : Choisir et exécuter l'opération ===
     if args.brute_force:
-        resultat = brute_force(texte_a_traiter)
+        #bresultat = brute_force(texte_a_traiter)
+        if isinstance(cle, tuple) or args.action == "enigma":
+            resultat = brute_force_enigma(texte_a_traiter)
+        else:
+            resultat = brute_force_cesar(texte_a_traiter)
     else:
         if args.action == "chiffrer":
             resultat = chiffrer(texte_a_traiter, cle)
