@@ -4,7 +4,7 @@ MGA802 — Mini-Projet A : Chiffrement de César
 """
 import argparse
 import unicodedata
-
+from time import perf_counter
 
 def enlever_caracteres_speciaux(mot):
     """Retire les accents d'une chaîne de caractères selon la méthode du cours."""
@@ -57,12 +57,21 @@ def enigma_chiffrer(message: str, cles: tuple) -> str:
 
     Exemple : enigma_chiffrer("MAISON", (7, 16, 9)) -> "TQRZEW"
     """
-    if len(cles) != 3:
-        raise ValueError("La clé Enigma César doit contenir exactement 3 entiers.")
+
+    if len(cles) != 3 and all(isinstance(cle, int) for cle in cles):
+        raise ValueError("Erreur pour renseigner le nombre de variables ! \n"
+                         "Il faut exactement 3 entiers pour les clés. Merci. ")
+    elif len(cles) != 3 :
+        raise ValueError("Erreur pour renseigner le type et le nombre de variables ! \n"
+                         "Il faut exactement 3 entiers pour les clés. Merci. ")
+    elif not all(isinstance(cle, int) for cle in cles) :
+        raise ValueError("Erreur pour renseigner le type de variables ! \n"
+                         "Il faut 3 entiers pour les clés. Merci. ")
 
     resultat = []
     index_rotor = 0  # Tourne de 0 à 2, uniquement sur les lettres
 
+    # if all(isinstance(cle, int) for cle in cles) and len(cles) == 3:
     for caractere in message:
         if caractere.isalpha():
             cle_courante = cles[index_rotor % 3]
@@ -72,7 +81,6 @@ def enigma_chiffrer(message: str, cles: tuple) -> str:
             resultat.append(caractere)
 
     return "".join(resultat)
-
 
 def enigma_dechiffrer(message: str, cles: tuple) -> str:
     """
@@ -85,6 +93,232 @@ def enigma_dechiffrer(message: str, cles: tuple) -> str:
     cles_inverses = tuple(-c for c in cles)
     return enigma_chiffrer(message, cles_inverses)
 
+def noter_decryptage(message: str) -> int :
+    """
+    Notation d'un décryptage simple et rapide pour détecter du français.
+    Plus le score est élevée, plus le texte paraît bon
+
+    La détection fonctionne sur les 10 lettres les plus fréquentes de la langue française :
+    e, s, a, i, t, n, r, u, l et o source : https://www.apprendre-en-ligne.net/crypto/stat/batonsfr2.gif
+    Le score de chaque lettre sera faible (On divise par 10 par rapport à la source citée)
+    On va aussi effectuer un test sur la quantité de voyelles dans un texte en utilisant les mêmes données.
+    D'après les données, les voyelles représentent environ 45 % des lettres dans un texte.
+    On va ajouter une pénalité si on est en dehors de l'intervalle [25;65]
+
+    La détection fonctionne également avec quelques mots très courants dans la langue française :
+    le/la/l’, de, un/une, à (devient a), et, il, je, ne, pas, en
+    source : https://www.ccfs-sorbonne.fr/quels-sont-les-mots-les-plus-utilises-de-la-langue-francaise/
+    Le score de chacun de ces mots sera important comparativement aux lettres
+    Ensuite je mets à + 10 par défaut si ces mots sont présents.
+    """
+    texte_test_enigmma = message.lower()
+    note_decryptage = 0.0
+
+    # =========================
+    # 1. Lettres fréquentes et notation
+    # =========================
+    lettres_frequentes = {
+        'e': 1.75, 's': .8125, 'a': .8125, 'i': .725,
+        't': .7, 'n': .7, 'r': .65, 'u': .625,
+        'l': .55, 'o': .5125
+    }
+
+    for c in texte_test_enigmma :
+        note_decryptage += lettres_frequentes.get(c, 0)
+        # Le 0 indique qu'il n'y a pas de pénalité pour les autres lettres
+
+        # =========================
+        # 2. Mots fréquents
+        # =========================
+        mots_frequents = ('le', 'la', 'de', 'un', 'une',
+                          'a', 'et', 'il', 'je', 'ne', 'pas', 'en')
+
+        mots_texte = texte_test_enigmma.split()
+        for mot in mots_texte :
+            if mot in mots_frequents :
+                note_decryptage += 10
+
+        # =========================
+        # 3. Voyelles proportions
+        # =========================
+        voyelles = "aeiouy"
+        nbre_de_voyelle = sum(1 for lettre in texte_test_enigmma if lettre in voyelles)
+
+        if len(texte_test_enigmma) > 0 :
+            proportion_voyelle = nbre_de_voyelle / len(texte_test_enigmma)
+
+            if proportion_voyelle < 0.25 or proportion_voyelle > 0.65 :
+                note_decryptage -= 5
+
+            if len(texte_test_enigmma) > 4 : # Le plus long mot français avec seulement des voyelles est ouïe
+                if proportion_voyelle < 0.15 or proportion_voyelle > 0.85 :
+                    note_decryptage = 0
+
+        # =========================
+        # 4. Apostrophes interdites
+        # =========================
+        apostrophe_impossible = ("a'","b'","e'","f'","g'","h'","i'","k'","o'",
+                                 "p'","q'","r'","u'","v'","w'","x'","y'","z'")
+        for mot in apostrophe_impossible :
+            if mot in texte_test_enigmma :
+                note_decryptage = 0
+
+    return note_decryptage
+
+'''def test_bon_score(message: str, cle_enigma: tuple,meilleur_score) :
+    texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
+    score_texte = noter_decryptage(texte_complet_enigmma)
+
+    # On remplace les valeurs en fonction du meilleur résultat
+    if score_texte > meilleur_score:
+        meilleur_score = score_texte
+        meilleur_texte = texte_complet_enigmma
+        meilleure_cle = cle_enigma
+    return (meilleur_score, meilleur_texte)'''
+
+def brute_force_enigma(message: str) -> str:
+    """
+    Brute-force pour déchiffrer la version simplifiée d'Enigma.
+    Retourne les meilleurs déchiffrements trouvés ainsi que les clés.
+    """
+    meilleurs_specs = []
+    nombre_retenu = 5
+
+    debut_brute_force = perf_counter()
+
+    '''
+    Essai de toutes les clés (26 ** 3)
+    Pour se mettre dans un contexte plus proche du décryptage d'Enigma avec des capacités limitées,
+    on ne parcourt l'entièreté du message que si il est prometteur.
+    Pour éviter de craquer le code trop facilement, la dimension des messages étaient limitées
+    (typiquement 200 caractères, source : https://www.cs.miami.edu/home/harald/enigma/ )
+    On va donc décrypter dans un premier temps 100 caratères.
+    '''
+    for cle1 in range(26) :
+        for cle2 in range(26) :
+            for cle3 in range(26) :
+                cle_enigma = (cle1, cle2, cle3)
+
+                # Si la liste des n meilleures solutions des pas pleine, l'ajout est direct
+                if len(meilleurs_specs) < nombre_retenu :
+                    if len(message) > 100 :
+                        """
+                        Pour identifier si un texte de plus de 100 caractères est prometteurs, c'est fait en deux étapes
+                        D'abord sur les 100 premiers caractères avec un score intermédiaire puis avec la décryption
+                        totale et un score final.
+                         """
+                        # Section intermédiaire
+                        extrait_texte_optimisation = message[:100]
+                        texte_partiel_enigmma = enigma_dechiffrer(message, cle_enigma)
+                        score_intermediaire = noter_decryptage(texte_partiel_enigmma)
+                        # Section finale
+                        texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
+                        score_final = noter_decryptage(texte_partiel_enigmma)
+
+                        meilleurs_specs.append((score_intermediaire, score_final, cle_enigma, texte_complet_enigmma))
+                    else :
+                        texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
+                        score_texte = noter_decryptage(texte_complet_enigmma)
+                        meilleurs_specs.append((score_texte, cle_enigma, texte_complet_enigmma))
+                else :
+                    """
+                    meilleurs_specs est l'élément de référence, on prend un élément appelé specs.
+                    C'est un tuple (score, cle, texte).
+                    On récupère le score avec specs[0]. En ajoutant key = , on précise que le calcul de la fonction min
+                    porte uniquement sur le score et ressort le tuple qui contient le score minimum.
+                    D'où l'indexation [0] qui récupère seulement le score
+                    """
+                    pire_score = min(meilleurs_specs, key = lambda specs: specs[0])[0]
+
+                    if len(message) > 100 :
+                        extrait_texte_optimisation = message[:100]
+                        texte_partiel_enigmma = enigma_dechiffrer(message, cle_enigma)
+                        score_intermediaire = noter_decryptage(texte_partiel_enigmma)
+                        # Seulement si le décryptage est prometteur va-t-on déchiffrer l'intégralité du message
+                        if score_intermediaire > pire_score :
+                            texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
+                            score_final = noter_decryptage(texte_complet_enigmma)
+                            # Même méthodologie lambda que précédemment mais pour identifier le pire_score_final ici
+                            pire_score_final = min(meilleurs_specs, key = lambda specs: specs[1])[1]
+
+                            # On remplace les valeurs en fonction du meilleur résultat
+                            if score_final > pire_score_final:
+                                """
+                                range(nombre_retenu) est l'élément de référence, il s'agit d'indice.
+                                On prend un élément appelé index qui est un indice de meilleurs_specs.
+                                On compare les valeurs de meilleurs_specs[index][1] pour trouver le minimum
+                                et on renvoie l'indice correspondant.
+                                """
+                                # On remplace le pire des résultats
+                                index_pire_combinaison = min(range(nombre_retenu),
+                                                             key = lambda index: meilleurs_specs[index][1])
+                                meilleurs_specs[index_pire_combinaison] = (score_intermediaire, score_final, cle_enigma,
+                                                                           texte_complet_enigmma)
+                    else :
+                        texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
+                        score_texte = noter_decryptage(texte_complet_enigmma)
+
+                        # On remplace les valeurs en fonction du meilleur résultat
+                        if score_texte > pire_score:
+                            index_pire_combinaison = min(range(nombre_retenu),
+                                                         key = lambda index: meilleurs_specs[index][0])
+                            meilleurs_specs[index_pire_combinaison] = (score_texte, cle_enigma,
+                                                                       texte_complet_enigmma)
+
+    if len(message) > 100:
+        meilleurs_specs_triees = sorted(meilleurs_specs, key = lambda specs: specs[1], reverse=True)
+    else :
+        meilleurs_specs_triees = sorted(meilleurs_specs, key=lambda specs: specs[0], reverse=True)
+
+    fin_brute_force = perf_counter()
+    print(f"Temps d'exécution : {fin_brute_force - debut_brute_force:.4f} secondes")
+
+    return meilleurs_specs_triees
+
+def brute_force_cesar(message: str) -> str:
+    """
+    Brute-force pour déchiffrer le code César.
+    Retourne les meilleurs déchiffrements trouvés ainsi que les clés.
+    """
+    meilleurs_specs = []
+    nombre_retenu = 5
+
+    debut_brute_force = perf_counter()
+
+    '''
+    Essaye toutes les clés (26)
+    '''
+    for cle in range(26) :
+        # Si la liste des n meilleures solutions des pas pleine, l'ajout est direct
+        if len(meilleurs_specs) < nombre_retenu :
+            texte_complet = dechiffrer(message, cle)
+            score_texte = noter_decryptage(texte_complet)
+            meilleurs_specs.append((score_texte, cle, texte_complet))
+        else :
+            """
+            meilleurs_specs est l'élément de référence, on prend un élément appelé specs.
+            C'est un tuple (score, cle, texte).
+            On récupère le score avec specs[0]. En ajoutant key = , on précise que le calcul de la fonction min
+            porte uniquement sur le score et ressort le tuple qui contient le score minimum.
+            D'où l'indexation [0] qui récupère seulement le score
+            """
+            pire_score = min(meilleurs_specs, key = lambda specs: specs[0])[0]
+
+            texte_complet = dechiffrer(message, cle)
+            score_texte = noter_decryptage(texte_complet)
+
+            # On remplace les valeurs en fonction du meilleur résultat
+            if score_texte > pire_score:
+                index_pire_combinaison = min(range(nombre_retenu),
+                                             key = lambda index: meilleurs_specs[index][0])
+                meilleurs_specs[index_pire_combinaison] = (score_texte, cle, texte_complet)
+
+    meilleurs_specs_triees = sorted(meilleurs_specs, key=lambda specs: specs[0], reverse=True)
+
+    fin_brute_force = perf_counter()
+    print(f"Temps d'exécution : {fin_brute_force - debut_brute_force:.4f} secondes")
+
+    return meilleurs_specs_triees
 
 def _parse_cle(texte: str):
     """Convertit l'argument --cle en clé utilisable.
@@ -176,8 +410,7 @@ def main(argv=None):
 
     # === ÉTAPE 6 : Choisir et exécuter l'opération ===
     if args.brute_force:
-        #TODO: implémenter le mode brute-force (César et Enigma César)
-        resultat = "[Mode Brute-Force non encore implémenté]"
+        resultat = brute_force(texte_a_traiter)
     else:
         if args.action == "chiffrer":
             resultat = chiffrer(texte_a_traiter, cle)
