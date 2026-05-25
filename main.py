@@ -93,7 +93,7 @@ def enigma_dechiffrer(message: str, cles: tuple) -> str:
     cles_inverses = tuple(-c for c in cles)
     return enigma_chiffrer(message, cles_inverses)
 
-def noter_decryptage(message: str) -> int :
+def noter_decryptage(message: str) -> float :
     """
     Notation d'un décryptage simple et rapide pour détecter du français.
     Plus le score est élevée, plus le texte paraît bon
@@ -110,95 +110,103 @@ def noter_decryptage(message: str) -> int :
     source : https://www.ccfs-sorbonne.fr/quels-sont-les-mots-les-plus-utilises-de-la-langue-francaise/
     Le score de chacun de ces mots sera important comparativement aux lettres
     Ensuite je mets à + 10 par défaut si ces mots sont présents.
+
+    Je mets un malus pour des apostrophes associées à des lettres inhabituelles.
+
+    Les résultats étant mauvais pour de court messages, on rajoute des tests pour des groupes de 2, 3 et 4 lettres
+    Je mets un malus et un bonus pour des digrammes et trigrammes rares ou communs et des bonus pour des tétragrammes.
     """
-    texte_test_enigmma = message.lower()
+    texte_test_enigma = message.lower()
     note_decryptage = 0.0
+    longueur_texte = len(texte_test_enigma)
 
     # =========================
-    # 1. Lettres fréquentes et notation
+    # 1. Lettres fréquentes et notation plus digrammes et trigrammes
     # =========================
-    lettres_frequentes = {
-        'e': 1.75, 's': .8125, 'a': .8125, 'i': .725,
-        't': .7, 'n': .7, 'r': .65, 'u': .625,
-        'l': .55, 'o': .5125
-    }
+    # Lettres fréquentes et gain associé
+    lettres_frequentes = {'e': 1.75, 's': .8125, 'a': .8125,
+                          'i': .725, 't': .7, 'n': .7, 'r': .65,
+                          'u': .625, 'l': .55, 'o': .5125}
 
-    for c in texte_test_enigmma :
-        note_decryptage += lettres_frequentes.get(c, 0)
+    # Digrammes / Trigrammes rares (malus), population issue d'erreur lors de tests et que peu probable de base
+    digrammes_rares = {"zx", "qj", "jq", "wq", "qw", "cw", "xq", "zq", "qk",
+                       "cg", "gc", "mq", "zj", "zs", "nz", "gk", "gf",
+                       "uu", "wp", "gs", "mk", "lw"}
+    trigrammes_rares = {"qlu", "zxq", "wqz", "zqw", "bfr", "jqx", "qqq", "qmu", "qwu", "kjq",
+                        "quu", "eui", "byr", "qau", "eyk", "euw", "qiu", "zue", "vqr", "mqr", "qnc", "upv",
+                        "qsu", "kqr", "nqs", "qnu", "fqr", "rvx", "qbu", "tqr", "jxe"}
+
+    # Digrammes / Trigrammes / Tétragrammes fréquents (bonus)
+    # Source https://www.apprendre-en-ligne.net/crypto/stat/francais.html
+    digrammes_frequents = {"es", "le", "en", "re", "de", "on", "se",
+                           "nt", "te", "ai", "et", "er", "ou"}
+    trigrammes_frequents = {"ent", "les", "ait", "que", "ede", "ion", "dan", "est",
+                            "des", "lle", "res", "ant", "tre", "une", "par"}
+    tetragrammes_frequents = {"ment", "elle", "quel", "emen", "tion",
+                            "dans", "ient", "esde", "dela", "omme"}
+
+    # Test lettres, digrammes, trigrammes et tétragrammes dans une boucle commune
+    for i in range(longueur_texte) :
+        lettre_testee = texte_test_enigma[i]
+        note_decryptage += lettres_frequentes.get(lettre_testee, 0)
         # Le 0 indique qu'il n'y a pas de pénalité pour les autres lettres
 
+        # Digramme, donc il faut réduire l'intervalle
+        if i < longueur_texte - 1 :
+            digramme = texte_test_enigma[i:i + 2]
+            if digramme in digrammes_frequents :
+                note_decryptage += 2
+            elif digramme in digrammes_rares :
+                note_decryptage -= 3
+
+            # Trigramme, on réduit encore l'intervalle indexation avec digramme car si pas digramme pas possible tri
+            if i < longueur_texte - 2 :
+                trigramme = texte_test_enigma[i:i + 3]
+                if trigramme in trigrammes_frequents :
+                    note_decryptage += 4
+                elif trigramme in trigrammes_rares :
+                    note_decryptage -= 6
+
+                # Tétragrammes, on réduit encore l'intervalle indexation selon la même logique
+                if i < longueur_texte - 3 :
+                    tetragramme = texte_test_enigma[i:i + 4]
+                    if tetragramme in tetragrammes_frequents :
+                        note_decryptage += 8
+
     # =========================
-    # 2. Mots fréquents
+    # 2. Voyelles proportions
+    # =========================
+    voyelles = "aeiouy"
+    nbre_de_voyelle = sum(1 for lettre in texte_test_enigma if lettre in voyelles)
+
+    if longueur_texte > 0 :
+        proportion_voyelle = nbre_de_voyelle / longueur_texte
+
+        if 0.15 < proportion_voyelle < 0.25 or 0.85 > proportion_voyelle > 0.65 :
+            note_decryptage *= 0.95 # On retire 5% du score
+
+        if longueur_texte > 4 : # Le plus long mot français avec seulement des voyelles est ouïe
+            if .1 < proportion_voyelle < 0.15 or .9 > proportion_voyelle > 0.85 :
+                note_decryptage *= 0.8 # On retire 20% du score
+
+            # S'il y a trop peu de voyelle, la proposition est rejetée
+            elif proportion_voyelle <= 0.1 or .9 <= proportion_voyelle :
+                return 0
+
+    # =========================
+    # 3. Mots fréquents
     # =========================
     mots_frequents = ('le', 'la', 'de', 'un', 'une',
                       'a', 'et', 'il', 'je', 'ne', 'pas', 'en')
 
-    mots_texte = texte_test_enigmma.split()
+    mots_texte = texte_test_enigma.split()
     for mot in mots_texte :
         if mot in mots_frequents :
             note_decryptage += 5
 
-    # =========================
-    # 3. Voyelles proportions
-    # =========================
-    voyelles = "aeiouy"
-    nbre_de_voyelle = sum(1 for lettre in texte_test_enigmma if lettre in voyelles)
-
-    if len(texte_test_enigmma) > 0 :
-        proportion_voyelle = nbre_de_voyelle / len(texte_test_enigmma)
-
-        if proportion_voyelle < 0.25 or proportion_voyelle > 0.65 :
-            note_decryptage *= 0.95 # On retire 5% du score
-
-        if len(texte_test_enigmma) > 4 : # Le plus long mot français avec seulement des voyelles est ouïe
-            if proportion_voyelle < 0.15 or proportion_voyelle > 0.85 :
-                note_decryptage *= 0.85 # On retire 15% du score
-
-    # =========================
-    # 4. Apostrophes interdites
-    # =========================
-    apostrophe_impossible = ("a'","b'","e'","f'","g'","h'","i'","k'","o'",
-                             "p'","q'","r'","u'","v'","w'","x'","y'","z'")
-    for mot in apostrophe_impossible :
-        if mot in texte_test_enigmma :
-            note_decryptage *= 0.85 # On retire 15% du score
-
-    # =========================
-    # 5. Digrammes / Trigrammes rares (malus)
-    # =========================
-
-    # Issus d'erreur lors de tests et que peu probable de base
-    digrammes_rares = ("zx", "qj", "jq", "wq", "qw", "cw", "xq", "zq", "yu", "qk",
-                       "cg","gc","uu","mq","zj")
-    trigrammes_rares = ("qlu", "zxq", "wqz", "zqw", "bfr", "jqx", "qqq", "qmu", "qwu", "kjq",
-                        "quu","eui","byr","qau","eyk","euw","qiu","zue","vqr","mqr","qnc","upv",
-                        "qsu","kqr","nqs","qnu","fqr","rvx","qbu","tqr","jxe","")
-    # Digrammes
-    for i in range(len(texte_test_enigmma) - 1):
-        digramme = texte_test_enigmma[i:i + 2]
-        if digramme in digrammes_rares:
-            note_decryptage -= 3
-
-    # Trigrammes
-    for i in range(len(texte_test_enigmma) - 2):
-        trigramme = texte_test_enigmma[i:i + 3]
-        if trigramme in trigrammes_rares:
-            note_decryptage -= 6
-
     return note_decryptage
 
-'''def test_bon_score(message: str, cle_enigma: tuple,meilleur_score) :
-    texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
-    score_texte = noter_decryptage(texte_complet_enigmma)
-
-    # On remplace les valeurs en fonction du meilleur résultat
-    if score_texte > meilleur_score:
-        meilleur_score = score_texte
-        meilleur_texte = texte_complet_enigmma
-        meilleure_cle = cle_enigma
-    return (meilleur_score, meilleur_texte)'''
-
-def brute_force_enigma(message: str) -> str:
+def brute_force_enigma(message: str) -> list:
     """
     Brute-force pour déchiffrer la version simplifiée d'Enigma.
     Retourne les meilleurs déchiffrements trouvés ainsi que les clés.
@@ -231,17 +239,17 @@ def brute_force_enigma(message: str) -> str:
                          """
                         # Section intermédiaire
                         extrait_texte_optimisation = message[:100]
-                        texte_partiel_enigmma = enigma_dechiffrer(extrait_texte_optimisation, cle_enigma)
-                        score_intermediaire = noter_decryptage(texte_partiel_enigmma)
+                        texte_partiel_enigma = enigma_dechiffrer(extrait_texte_optimisation, cle_enigma)
+                        score_intermediaire = noter_decryptage(texte_partiel_enigma)
                         # Section finale
-                        texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
-                        score_final = noter_decryptage(texte_complet_enigmma)
+                        texte_complet_enigma = enigma_dechiffrer(message, cle_enigma)
+                        score_final = noter_decryptage(texte_complet_enigma)
 
-                        meilleurs_specs.append((score_intermediaire, score_final, cle_enigma, texte_complet_enigmma))
+                        meilleurs_specs.append((score_intermediaire, score_final, cle_enigma, texte_complet_enigma))
                     else :
-                        texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
-                        score_texte = noter_decryptage(texte_complet_enigmma)
-                        meilleurs_specs.append((score_texte, cle_enigma, texte_complet_enigmma))
+                        texte_complet_enigma = enigma_dechiffrer(message, cle_enigma)
+                        score_texte = noter_decryptage(texte_complet_enigma)
+                        meilleurs_specs.append((score_texte, cle_enigma, texte_complet_enigma))
                 else :
                     """
                     meilleurs_specs est l'élément de référence, on prend un élément appelé specs.
@@ -254,12 +262,12 @@ def brute_force_enigma(message: str) -> str:
 
                     if len(message) > 100 :
                         extrait_texte_optimisation = message[:100]
-                        texte_partiel_enigmma = enigma_dechiffrer(message, cle_enigma)
-                        score_intermediaire = noter_decryptage(texte_partiel_enigmma)
+                        texte_partiel_enigma = enigma_dechiffrer(extrait_texte_optimisation, cle_enigma)
+                        score_intermediaire = noter_decryptage(texte_partiel_enigma)
                         # Seulement si le décryptage est prometteur va-t-on déchiffrer l'intégralité du message
                         if score_intermediaire > pire_score :
-                            texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
-                            score_final = noter_decryptage(texte_complet_enigmma)
+                            texte_complet_enigma = enigma_dechiffrer(message, cle_enigma)
+                            score_final = noter_decryptage(texte_complet_enigma)
                             # Même méthodologie lambda que précédemment mais pour identifier le pire_score_final ici
                             pire_score_final = min(meilleurs_specs, key = lambda specs: specs[1])[1]
 
@@ -275,20 +283,23 @@ def brute_force_enigma(message: str) -> str:
                                 index_pire_combinaison = min(range(nombre_retenu),
                                                              key = lambda index: meilleurs_specs[index][1])
                                 meilleurs_specs[index_pire_combinaison] = (score_intermediaire, score_final, cle_enigma,
-                                                                           texte_complet_enigmma)
+                                                                           texte_complet_enigma)
                     else :
-                        texte_complet_enigmma = enigma_dechiffrer(message, cle_enigma)
-                        score_texte = noter_decryptage(texte_complet_enigmma)
+                        texte_complet_enigma = enigma_dechiffrer(message, cle_enigma)
+                        score_texte = noter_decryptage(texte_complet_enigma)
 
                         # On remplace les valeurs en fonction du meilleur résultat
                         if score_texte > pire_score:
                             index_pire_combinaison = min(range(nombre_retenu),
                                                          key = lambda index: meilleurs_specs[index][0])
                             meilleurs_specs[index_pire_combinaison] = (score_texte, cle_enigma,
-                                                                       texte_complet_enigmma)
+                                                                       texte_complet_enigma)
 
     if len(message) > 100:
-        meilleurs_specs_triees = sorted(meilleurs_specs, key = lambda specs: specs[1], reverse=True)
+        # Supprimer le score intermédiaire pour l'affichage final
+        meilleurs_specs_3_data = [(specs[1], specs[2], specs[3])  # (score_final, cle, texte)
+                                  for specs in meilleurs_specs]
+        meilleurs_specs_triees = sorted(meilleurs_specs_3_data, key = lambda specs: specs[0], reverse=True)
     else :
         meilleurs_specs_triees = sorted(meilleurs_specs, key=lambda specs: specs[0], reverse=True)
 
@@ -298,7 +309,7 @@ def brute_force_enigma(message: str) -> str:
 
     return meilleurs_specs_triees
 
-def brute_force_cesar(message: str) -> str:
+def brute_force_cesar(message: str) -> list:
     """
     Brute-force pour déchiffrer le code César.
     Retourne les meilleurs déchiffrements trouvés ainsi que les clés.
@@ -339,6 +350,7 @@ def brute_force_cesar(message: str) -> str:
     meilleurs_specs_triees = sorted(meilleurs_specs, key=lambda specs: specs[0], reverse=True)
 
     fin_brute_force = perf_counter()
+
     print(f"Temps d'exécution : {fin_brute_force - debut_brute_force:.4f} secondes")
     print("Décryptage brute force César")
     return meilleurs_specs_triees

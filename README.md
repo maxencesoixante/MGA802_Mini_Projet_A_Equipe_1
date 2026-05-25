@@ -138,6 +138,9 @@ Le code est organisé autour d'un seul module `main.py` qui regroupe :
 
 **Enigma César — avancement du rotor :** Le compteur de rotor n'avance que sur les lettres alphabétiques. Les caractères spéciaux ne consomment pas de position de clé, conformément à la spec.
 
+**Format de sortie (brute-force) :** Les fonctions de brute-force retournent une liste triée contenant :
+(score, clé, texte). Les résultats sont triés par score `décroissant`.
+
 ---
 
 ## Tests
